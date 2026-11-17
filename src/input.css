@@ -5,6 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 @config "../tailwind.config.js";
 
+.audit-print-report {
+  display: none;
+}
+
 :root {
   color-scheme: light;
   --background: #f7f8f6;
@@ -50,6 +54,14 @@
 }
 
 @media print {
+  @page {
+    margin: 12mm;
+  }
+
+  .audit-print-mode > :first-child {
+    display: none !important;
+  }
+
   body {
     background: #fff !important;
   }
@@ -71,6 +83,15 @@
     color: #172f27;
   }
 
+  #print-area.audit-print-report {
+    position: static;
+    inset: auto;
+    display: block !important;
+    width: auto;
+    padding: 0;
+    font-size: 9pt;
+  }
+
   #print-area .no-print {
     display: none !important;
   }
@@ -90,6 +111,67 @@
     border-bottom: 1px solid #e5e9e3;
     padding: 10px 8px;
     text-align: left;
+  }
+
+  #print-area.audit-print-report th,
+  #print-area.audit-print-report td {
+    padding: 5px 6px;
+    vertical-align: top;
+  }
+
+  .audit-report-header {
+    border-bottom: 2px solid #12563d;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+  }
+
+  .audit-report-header h1 {
+    font-size: 18pt;
+    margin: 6px 0;
+  }
+
+  .audit-report-header p {
+    margin: 3px 0;
+  }
+
+  .audit-section {
+    margin: 16px 0;
+  }
+
+  .audit-section h2 {
+    font-size: 12pt;
+    margin: 0 0 7px;
+  }
+
+  .audit-section table {
+    font-size: 8pt;
+  }
+
+  .audit-section th {
+    font-weight: 600;
+  }
+
+  .audit-section thead {
+    display: table-header-group;
+  }
+
+  .audit-section tr {
+    break-inside: avoid;
+  }
+
+  .audit-breakdown {
+    margin-top: 8px;
+    max-width: 430px;
+  }
+
+  .audit-muted,
+  .audit-note {
+    color: #526158;
+    font-size: 8pt;
+  }
+
+  .audit-note {
+    margin-top: 7px;
   }
 }
 

@@ -452,6 +452,11 @@ function Overview({ data, totals, warnings, setPage }) {
         description="Pantau HPP, harga jual, dan kesiapan alokasi biaya dalam satu tampilan."
         icon={LayoutDashboard}
       />
+      <div className="no-print mb-4 flex justify-end">
+        <Button icon={<ArrowDownToLine />} onClick={() => window.print()}>
+          Cetak ke PDF
+        </Button>
+      </div>
       <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="HPP per jamaah"
@@ -654,6 +659,215 @@ function Overview({ data, totals, warnings, setPage }) {
         </div>
       </div>
     </>
+  );
+}
+
+function AuditPrintReport({ data, totals, warnings }) {
+  const directLabels = {
+    visa: "Visa",
+    flight: "Tiket pesawat",
+    zamzam: "Air zamzam",
+    porter: "Porter",
+  };
+  const sharedLabels = {
+    airport: "Handling bandara",
+    hotel: "Biaya hotel bersama",
+    guide: "Muthawif / guide",
+    other: "Biaya lainnya",
+  };
+  const convertedAmount = (amount, currency) => {
+    const raw = new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(num(amount));
+    return currency === "SAR"
+      ? `${raw} (${fmt(num(amount) * num(data.exchange))})`
+      : raw;
+  };
+  const departure = data.departure
+    ? new Date(`${data.departure}T00:00:00`).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "Belum ditentukan";
+
+  return (
+    <div id="print-area" className="audit-print-report">
+      <header className="audit-report-header">
+        <p>{data.company || "Travel Umroh"}</p>
+        <h1>Lembar audit perhitungan HPP</h1>
+        <p>{data.packageName || "Paket Umroh"}</p>
+        <p className="audit-muted">
+          Dicetak {new Date().toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" })}
+        </p>
+      </header>
+
+      <section className="audit-section">
+        <h2>Asumsi paket dan kurs</h2>
+        <table>
+          <tbody>
+            <tr><th>Keberangkatan</th><td>{departure}</td><th>Jamaah</th><td>{integer(data.pax)} pax</td></tr>
+            <tr><th>Durasi</th><td>{integer(data.duration)} hari</td><th>Markup</th><td>{num(data.markup)}%</td></tr>
+            <tr>
+              <th>Malam menginap</th>
+              <td>Makkah {integer(data.nightsMakkah)} · Madinah {integer(data.nightsMadinah)}</td>
+              <th>Total malam</th>
+              <td>{integer(data.nightsMakkah + data.nightsMadinah)}</td>
+            </tr>
+            <tr>
+              <th>Kurs</th>
+              <td>1 SAR = {fmt(num(data.exchange))} IDR</td>
+              <th>Sumber kurs</th>
+              <td>
+                {data.exchangeSource === "manual" ? "Manual" : "Otomatis"}
+                {data.exchangeUpdatedAt ? ` · ${data.exchangeUpdatedAt}` : ""}
+                {data.exchangeFetchedAt ? ` · ${formatDateTime(data.exchangeFetchedAt)}` : ""}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section className="audit-section">
+        <h2>Ringkasan hasil</h2>
+        <table>
+          <tbody>
+            <tr><th>Total HPP paket</th><td>{fmt(totals.costTotal)}</td><th>HPP per jamaah</th><td>{fmt(totals.hppPerPax)}</td></tr>
+            <tr><th>Total penjualan</th><td>{fmt(totals.revenue)}</td><th>Harga jual per jamaah</th><td>{fmt(totals.sellPerPax)}</td></tr>
+            <tr><th>Estimasi laba kotor</th><td>{fmt(totals.profit)}</td><th>Alokasi jamaah</th><td>{integer(totals.allocated)} / {integer(data.pax)}</td></tr>
+          </tbody>
+        </table>
+        <table className="audit-breakdown">
+          <thead>
+            <tr><th>Rincian HPP per jamaah</th><th>Nilai (IDR)</th></tr>
+          </thead>
+          <tbody>
+            {[
+              ["Akomodasi", totals.costBreakdownPerPax.accommodation],
+              ["Konsumsi", totals.costBreakdownPerPax.meals],
+              ["Transportasi", totals.costBreakdownPerPax.transport],
+              ["Biaya bersama", totals.costBreakdownPerPax.shared],
+              ["Biaya langsung", totals.costBreakdownPerPax.direct],
+            ].map(([label, amount]) => (
+              <tr key={label}><td>{label}</td><td>{fmt(amount)}</td></tr>
+            ))}
+            <tr><th>Total HPP per jamaah</th><th>{fmt(totals.hppPerPax)}</th></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section className="audit-section">
+        <h2>Rincian akomodasi dan HPP</h2>
+        {totals.rows.length ? (
+          <table>
+            <thead>
+              <tr>
+                <th>Akomodasi / tarif masukan</th>
+                <th>Alokasi</th>
+                <th>Biaya akomodasi</th>
+                <th>Konsumsi / pax</th>
+                <th>HPP / pax</th>
+                <th>Harga jual / pax</th>
+              </tr>
+            </thead>
+            <tbody>
+              {totals.rows.map((item) => {
+                const row = item.row;
+                const quantity =
+                  item.kind === "hotel"
+                    ? `${integer(row.rooms)} kamar × ${integer(row.nights)} malam`
+                    : `${integer(row.units)} unit`;
+                return (
+                  <tr key={row.id}>
+                    <td>
+                      <strong>{row.name || row.city || "Akomodasi"}</strong>
+                      <br />
+                      {item.kind === "hotel" ? "Hotel" : "Apartemen"}{row.city ? ` · ${row.city}` : ""}
+                      <br />
+                      Tarif: {convertedAmount(row.price, rowCurrency(row))} × {quantity}
+                      <br />
+                      Konsumsi: {convertedAmount(row.meal, rowCurrency(row))} × {integer(row.mealDays)} hari / pax
+                    </td>
+                    <td>{integer(item.people)} pax</td>
+                    <td>{fmt(item.cost)}</td>
+                    <td>{fmt(item.mealPerPax)}</td>
+                    <td>{fmt(item.costPerPax)}</td>
+                    <td>{fmt(item.sellPerPax)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p>Belum ada data akomodasi.</p>
+        )}
+      </section>
+
+      <section className="audit-section">
+        <h2>Biaya transportasi, bersama, dan langsung</h2>
+        <table>
+          <thead>
+            <tr><th>Komponen</th><th>Detail / nilai masukan</th><th>Nilai setelah konversi (IDR)</th></tr>
+          </thead>
+          <tbody>
+            {data.transport.map((row) => {
+              const currency = rowCurrency(row);
+              const total = num(row.price) * num(row.units);
+              return (
+                <tr key={row.id}>
+                  <td>
+                    Transportasi: {row.route || row.description || "Tanpa nama"}
+                    {row.description ? ` · ${row.description}` : ""}
+                  </td>
+                  <td>{convertedAmount(row.price, currency)} × {integer(row.units)} kendaraan</td>
+                  <td>{fmt(total * (currency === "SAR" ? num(data.exchange) : 1))}</td>
+                </tr>
+              );
+            })}
+            {Object.entries(data.shared).map(([key, amount]) => {
+              const currency = data.sharedCurrency[key] === "IDR" ? "IDR" : "SAR";
+              return (
+                <tr key={`shared-${key}`}>
+                  <td>Biaya bersama: {sharedLabels[key] || key}</td>
+                  <td>{convertedAmount(amount, currency)} · total paket</td>
+                  <td>{fmt(num(amount) * (currency === "SAR" ? num(data.exchange) : 1))}</td>
+                </tr>
+              );
+            })}
+            {Object.entries(data.direct).map(([key, amount]) => {
+              const currency = data.directCurrency[key] === "IDR" ? "IDR" : "SAR";
+              return (
+                <tr key={`direct-${key}`}>
+                  <td>Biaya langsung: {directLabels[key] || key}</td>
+                  <td>{convertedAmount(amount, currency)} · per jamaah</td>
+                  <td>{fmt(num(amount) * (currency === "SAR" ? num(data.exchange) : 1))}</td>
+                </tr>
+              );
+            })}
+            {!data.transport.length &&
+              !Object.values(data.shared).some((amount) => num(amount)) &&
+              !Object.values(data.direct).some((amount) => num(amount)) && (
+                <tr><td colSpan="3">Belum ada biaya transportasi atau biaya tambahan.</td></tr>
+              )}
+          </tbody>
+        </table>
+        <p className="audit-note">
+          Biaya dalam SAR dikonversi ke IDR menggunakan kurs yang tercantum di atas. Biaya langsung
+          dihitung per jamaah; biaya bersama dan transportasi dialokasikan sesuai perhitungan HPP.
+        </p>
+      </section>
+
+      <section className="audit-section">
+        <h2>Peringatan validasi</h2>
+        {warnings.length ? (
+          <ul>{warnings.map((warning) => <li key={warning.id}>{warning.message}</li>)}</ul>
+        ) : (
+          <p>Tidak ada peringatan validasi.</p>
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -2033,7 +2247,8 @@ function App() {
   };
 
   const nav = (
-    <AppShell
+    <div className={page === "overview" ? "audit-print-mode" : undefined}>
+      <AppShell
       label="Rihlah"
       nav={mainNav}
       groups={[
@@ -2217,7 +2432,11 @@ function App() {
           {toast}
         </div>
       )}
-    </AppShell>
+      </AppShell>
+      {page === "overview" && (
+        <AuditPrintReport data={data} totals={totals} warnings={warnings} />
+      )}
+    </div>
   );
 
   return nav;
