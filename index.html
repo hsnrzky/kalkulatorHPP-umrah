@@ -1,57 +1,16 @@
 <!doctype html>
 <html lang="id">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f7f2">
-  <title>Rihlah — Kalkulator HPP Umroh</title>
-  <script type="module" crossorigin src="./assets/index-DXE76mBL.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DLMedW-6.css">
-</head>
-<body class="min-h-screen bg-canvas text-ink antialiased">
-  <div class="min-h-screen lg:flex">
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 flex w-65 -translate-x-full flex-col border-r border-stone-200/80 bg-white px-5 py-6 transition-transform duration-200 lg:static lg:translate-x-0">
-      <a href="#" class="mb-9 flex items-center gap-3 px-2" aria-label="Rihlah beranda">
-        <span class="grid h-11 w-11 place-items-center rounded-2xl bg-brand-700 text-white shadow-sm">
-          <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true"><path d="M12 3.5 4 8v8l8 4.5 8-4.5V8l-8-4.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m8 10.1 4 2.3 4-2.3M12 12.5v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        </span>
-        <span><span class="font-display block text-lg font-extrabold tracking-tight">rihlah<span class="text-brand-600">.</span></span><span class="block text-[11px] font-medium tracking-wide text-stone-400">UMROH BUSINESS SUITE</span></span>
-      </a>
-      <p class="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.17em] text-stone-400">Workspace</p>
-      <nav class="space-y-1" aria-label="Navigasi utama">
-        <button data-page="overview" class="nav-link active flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-stone-600 transition hover:bg-stone-50">
-          <svg class="nav-icon h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>Ringkasan
-        </button>
-        <p class="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-[.17em] text-stone-400">Rincian biaya</p>
-        <button data-page="hotel" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-stone-600 transition hover:bg-stone-50"><svg class="nav-icon h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 20V7.5A2.5 2.5 0 0 1 6 5h12a2.5 2.5 0 0 1 2.5 2.5V20M3.5 15h17M7 10h3m4 0h3m-10 5v5m10-5v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Hotel</button>
-        <button data-page="apartments" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-stone-600 transition hover:bg-stone-50"><svg class="nav-icon h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 20V5.8A1.8 1.8 0 0 1 6.3 4h11.4a1.8 1.8 0 0 1 1.8 1.8V20M8 8h2m4 0h2m-8 4h2m4 0h2M10 20v-4h4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Apartemen</button>
-        <button data-page="transport" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-stone-600 transition hover:bg-stone-50"><svg class="nav-icon h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 14.5h18l-1.6-5.2a2 2 0 0 0-1.9-1.4H6.5a2 2 0 0 0-1.9 1.4L3 14.5ZM5 14.5v3h2m12-3v3h-2M7 17.5h10M7 11h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Transportasi</button>
-        <button data-page="other-costs" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-stone-600 transition hover:bg-stone-50"><svg class="nav-icon h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5v17m5-13H9.8a2.8 2.8 0 1 0 0 5.6h4.4a2.8 2.8 0 1 1 0 5.6H6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Biaya lainnya</button>
-        <p class="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-[.17em] text-stone-400">Untuk jamaah</p>
-        <button data-page="offer" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-stone-600 transition hover:bg-stone-50"><svg class="nav-icon h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1ZM14 3.5V8h4m-9 5h6m-6 4h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Penawaran paket</button>
-      </nav>
-      <div class="mt-auto rounded-2xl bg-brand-50 p-4">
-        <div class="mb-2 flex items-center gap-2 text-brand-700"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v5m0-8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="text-xs font-bold">Tips singkat</span></div>
-        <p class="text-xs leading-relaxed text-stone-600">Isi akomodasi dan alokasi jamaah agar HPP serta harga jual bisa dihitung.</p>
-        <div class="mt-3 flex items-center gap-2 text-[10px] text-stone-400"><span class="h-1.5 w-1.5 rounded-full bg-brand-500"></span>Data tersimpan otomatis</div>
-      </div>
-    </aside>
-    <div id="sidebar-backdrop" class="fixed inset-0 z-20 hidden bg-ink/30 lg:hidden"></div>
-    <div class="min-w-0 flex-1">
-      <header class="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-stone-200/80 bg-white/90 px-5 backdrop-blur-md sm:px-8">
-        <div class="flex items-center gap-3">
-          <button id="menu-button" class="grid h-10 w-10 place-items-center rounded-xl text-stone-500 hover:bg-stone-100 lg:hidden" aria-label="Buka menu"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-          <div><p class="text-[11px] font-medium text-stone-400">Workspace <span class="mx-1">/</span> <span id="breadcrumb">Ringkasan</span></p><h1 id="page-title" class="font-display text-sm font-bold text-ink sm:text-base">Ringkasan paket</h1></div>
-        </div>
-        <div class="flex items-center gap-3">
-          <span id="save-state" class="hidden items-center gap-1.5 text-xs text-stone-400 sm:flex"><span class="h-1.5 w-1.5 rounded-full bg-brand-500"></span>Tersimpan</span>
-          <span class="grid h-9 w-9 place-items-center rounded-full bg-sand text-xs font-bold text-brand-700">RH</span>
-        </div>
-      </header>
-      <main id="app" class="mx-auto max-w-[1440px] px-5 py-7 sm:px-8 sm:py-9"></main>
-      <footer class="mx-auto max-w-[1440px] px-5 pb-7 text-center text-[11px] text-stone-400 sm:px-8">Rihlah · Kalkulator biaya perjalanan umroh</footer>
-    </div>
-  </div>
-  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden rounded-xl bg-ink px-4 py-3 text-sm text-white shadow-lg" role="status" aria-live="polite"></div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7f2" />
+    <link rel="icon" type="image/png" href="./rihlah-icon.png" />
+    <link rel="apple-touch-icon" href="./rihlah-icon.png" />
+    <title>Rihlah — Kalkulator HPP Umroh</title>
+    <script type="module" crossorigin src="./assets/index-mHXm6nU1.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-B7d0JPN7.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
