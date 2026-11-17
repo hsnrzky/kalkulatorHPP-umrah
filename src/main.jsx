@@ -172,6 +172,75 @@ function PageHeading({ eyebrow, title, description, icon: Icon }) {
   );
 }
 
+function formatGroupedNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number !== 0
+    ? new Intl.NumberFormat("id-ID", { maximumFractionDigits: 8 }).format(number)
+    : "";
+}
+
+function formatNumberDraft(value) {
+  const parts = String(value).replace(/[^\d,]/g, "").split(",");
+  const integer = (parts.shift() || "").replace(/^0+(?=\d)/, "");
+  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return parts.length ? `${grouped},${parts.join("")}` : grouped;
+}
+
+function parseGroupedNumber(value) {
+  const number = Number(String(value).replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(number) ? Math.max(0, number) : 0;
+}
+
+function NumberInput({ value, onChange, onFocus, onBlur, ...props }) {
+  const [draft, setDraft] = useState(() => formatGroupedNumber(value));
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (!focused.current) setDraft(formatGroupedNumber(value));
+  }, [value]);
+
+  const handleChange = (event) => {
+    const raw = event.currentTarget.value;
+    const caret = event.currentTarget.selectionStart ?? raw.length;
+    const logicalCaret = raw.slice(0, caret).replace(/\./g, "").length;
+    const formatted = formatNumberDraft(raw);
+    setDraft(formatted);
+
+    const input = event.currentTarget;
+    requestAnimationFrame(() => {
+      if (document.activeElement !== input) return;
+      let position = 0;
+      let logicalPosition = 0;
+      while (position < formatted.length && logicalPosition < logicalCaret) {
+        if (formatted[position] !== ".") logicalPosition += 1;
+        position += 1;
+      }
+      input.setSelectionRange(position, position);
+    });
+
+    onChange?.({ target: { value: String(parseGroupedNumber(formatted)) } });
+  };
+
+  return (
+    <Input
+      {...props}
+      type="text"
+      inputMode="decimal"
+      value={draft}
+      onFocus={(event) => {
+        focused.current = true;
+        onFocus?.(event);
+      }}
+      onBlur={(event) => {
+        focused.current = false;
+        setDraft(formatGroupedNumber(value));
+        onBlur?.(event);
+      }}
+      onChange={handleChange}
+    />
+  );
+}
+
 function TextField({
   label,
   value,
@@ -186,17 +255,28 @@ function TextField({
   const id = useId();
   return (
     <KnownField id={id} label={label} hint={hint} className="min-w-0">
-      <Input
-        id={id}
-        size="lg"
-        type={type}
-        value={type === "number" && Number(value) === 0 ? "" : value ?? ""}
-        placeholder={placeholder ?? (type === "number" ? "0" : undefined)}
-        min={min}
-        step={step}
-        suffix={suffix}
-        onChange={onChange}
-      />
+      {type === "number" ? (
+        <NumberInput
+          id={id}
+          size="lg"
+          value={value}
+          placeholder={placeholder ?? "0"}
+          min={min}
+          step={step}
+          suffix={suffix}
+          onChange={onChange}
+        />
+      ) : (
+        <Input
+          id={id}
+          size="lg"
+          type={type}
+          value={value ?? ""}
+          placeholder={placeholder}
+          suffix={suffix}
+          onChange={onChange}
+        />
+      )}
     </KnownField>
   );
 }
@@ -206,14 +286,13 @@ function CurrencyAmount({ label, value, currency, onValueChange, onCurrencyChang
   return (
     <KnownField id={id} label={label} className="min-w-0">
       <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-2">
-        <Input
+        <NumberInput
           id={id}
           size="lg"
-          type="number"
           min="0"
           step="any"
           aria-label={label}
-          value={value || ""}
+          value={value}
           placeholder="0"
           onChange={onValueChange}
         />
@@ -305,15 +384,28 @@ function EditorTable({ rows, columns, onRemove, emptyLabel }) {
 }
 
 function TableInput({ value, onChange, type = "text", min, step, placeholder, label }) {
+  if (type === "number") {
+    return (
+      <NumberInput
+        size="sm"
+        min={min}
+        step={step}
+        placeholder={placeholder ?? "0"}
+        aria-label={label || placeholder || "Nilai biaya"}
+        value={value}
+        onChange={onChange}
+        className="min-w-24"
+      />
+    );
+  }
+
   return (
     <Input
       size="sm"
       type={type}
-      min={min}
-      step={step}
-      placeholder={placeholder ?? (type === "number" ? "0" : undefined)}
+      placeholder={placeholder}
       aria-label={label || placeholder || "Nilai biaya"}
-      value={type === "number" && Number(value) === 0 ? "" : value ?? ""}
+      value={value ?? ""}
       onChange={onChange}
       className="min-w-24"
     />
@@ -1534,8 +1626,15 @@ function App() {
   const [rateError, setRateError] = useState("");
   const rateRequestId = useRef(0);
   const toastTimer = useRef(null);
+  const dataRef = useRef(data);
+  dataRef.current = data;
   const totals = useMemo(() => summarize(data), [data]);
   const warnings = useMemo(() => validatePackage(data, totals), [data, totals]);
+  const hasPricing = totals.hppPerPax > 0 || totals.sellPerPax > 0;
+  const marginIsLoss = totals.hppPerPax > totals.sellPerPax;
+  const grossMarginPercent = totals.revenue
+    ? (totals.profit / totals.revenue) * 100
+    : 0;
   const detail = pageDetails[page] || pageDetails.overview;
 
   const notify = (message) => {
@@ -1741,6 +1840,25 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
+    const persistLatestData = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataRef.current));
+      } catch (error) {
+        console.error("Data kalkulator tidak dapat disimpan saat halaman ditutup:", error);
+      }
+    };
+    const persistWhenHidden = () => {
+      if (document.visibilityState === "hidden") persistLatestData();
+    };
+    window.addEventListener("pagehide", persistLatestData);
+    document.addEventListener("visibilitychange", persistWhenHidden);
+    return () => {
+      window.removeEventListener("pagehide", persistLatestData);
+      document.removeEventListener("visibilitychange", persistWhenHidden);
+    };
+  }, []);
+
+  useEffect(() => {
     setSaveStatus("Menyimpan...");
     const timer = setTimeout(() => {
       try {
@@ -1754,6 +1872,13 @@ function App() {
     }, 250);
     return () => clearTimeout(timer);
   }, [data]);
+
+  useEffect(() => {
+    if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`)
+      .catch((error) => console.error("Service worker PWA gagal didaftarkan:", error));
+  }, []);
 
   useEffect(() => {
     if (data.exchangeSource === "api") void refreshRate();
@@ -1929,7 +2054,7 @@ function App() {
           className="grid size-8 place-items-center rounded-full p-1 text-[11px] font-semibold"
         >
           <img
-            src="/rihlah-icon.png"
+            src={`${import.meta.env.BASE_URL}rihlah-icon.png`}
             alt=""
             className="size-full object-contain dark:invert"
           />
@@ -1968,7 +2093,7 @@ function App() {
         </div>
       }
     >
-      <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-7 sm:py-8 lg:px-9">
+      <div className="mx-auto w-full max-w-[1440px] px-4 pb-32 pt-6 sm:px-7 sm:pb-28 sm:pt-8 lg:px-9">
         {page === "overview" && (
           <Overview data={data} totals={totals} warnings={warnings} setPage={setPage} />
         )}
@@ -2025,9 +2150,67 @@ function App() {
           Rihlah · Kalkulator biaya perjalanan umroh
         </footer>
       </div>
+      <div
+        role="status"
+        aria-live="polite"
+        className={`no-print fixed right-0 bottom-0 left-[var(--kn-sidebar-inset-left,0px)] z-30 border-t shadow-lg backdrop-blur ${
+          marginIsLoss
+            ? "border-red-300 bg-red-50/95 dark:border-red-900 dark:bg-red-950/95"
+            : hasPricing
+              ? "border-emerald-300 bg-emerald-50/95 dark:border-emerald-900 dark:bg-emerald-950/95"
+              : "border-border bg-background/95"
+        }`}
+      >
+        <div className="mx-auto grid max-w-[1440px] grid-cols-3 gap-2 px-4 py-3 sm:gap-6 sm:px-7 sm:py-4 lg:px-9">
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium text-muted-foreground sm:text-xs">
+              Total HPP / jamaah
+            </p>
+            <p className="mt-1 truncate text-xs font-semibold tabular-nums sm:text-base">
+              {fmt(totals.hppPerPax)}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium text-muted-foreground sm:text-xs">
+              Harga jual paket
+            </p>
+            <p className="mt-1 truncate text-xs font-semibold tabular-nums sm:text-base">
+              {fmt(totals.sellPerPax)}
+            </p>
+            <p className="hidden truncate text-[11px] text-muted-foreground sm:block">
+              per jamaah · total {fmt(totals.revenue)}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium text-muted-foreground sm:text-xs">
+              Margin keuntungan
+            </p>
+            <p
+              className={`mt-1 truncate text-xs font-bold tabular-nums sm:text-base ${
+                marginIsLoss
+                  ? "text-red-700 dark:text-red-300"
+                  : hasPricing
+                    ? "text-emerald-700 dark:text-emerald-300"
+                    : "text-foreground"
+              }`}
+            >
+              {fmt(totals.profit)}
+            </p>
+            <p className="hidden truncate text-[11px] text-muted-foreground sm:block">
+              {marginIsLoss
+                ? "HPP melebihi harga jual"
+                : hasPricing
+                  ? `${grossMarginPercent.toLocaleString("id-ID", {
+                      maximumFractionDigits: 1,
+                    })}% dari penjualan`
+                  : "Masukkan biaya untuk menghitung"}
+            </p>
+          </div>
+        </div>
+      </div>
       {toast && (
         <div
-          className="fixed bottom-5 right-5 z-50 max-w-sm rounded-xl bg-foreground px-4 py-3 text-sm text-background shadow-lg"
+          className="fixed bottom-24 right-5 z-50 max-w-sm rounded-xl bg-foreground px-4 py-3 text-sm text-background shadow-lg sm:bottom-28"
           role="status"
           aria-live="polite"
         >

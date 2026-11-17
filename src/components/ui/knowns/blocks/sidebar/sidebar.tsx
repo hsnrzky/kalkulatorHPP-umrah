@@ -347,8 +347,17 @@ export function SidebarFooter({ children, className }: { children: ReactNode; cl
 }
 
 /** The main column beside the sidebar. */
-export function SidebarInset({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("flex min-w-0 flex-1 flex-col", className)}>{children}</div>;
+export function SidebarInset({ children, className, sidebarWidth = 256 }: { children: ReactNode; className?: string; sidebarWidth?: number }) {
+  const sidebar = useSidebar();
+  const insetLeft = sidebar.isMobile ? 0 : sidebar.collapsed ? 56 : sidebarWidth;
+  return (
+    <div
+      style={{ "--kn-sidebar-inset-left": `${insetLeft}px` } as CSSProperties}
+      className={cn("flex min-w-0 flex-1 flex-col", className)}
+    >
+      {children}
+    </div>
+  );
 }
 
 /**

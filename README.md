@@ -6,8 +6,12 @@ Seluruh halaman kalkulator menggunakan React dan komponen Knowns UI, dengan Tail
 
 ## Penggunaan
 
-Mulai dari **Biaya & pengaturan** untuk mengisi detail paket dan kurs, lalu tambahkan akomodasi dan transportasi. Ringkasan menampilkan checklist data yang perlu ditinjau serta rincian HPP per jamaah. Kurs yang diatur manual tidak diganti otomatis tanpa konfirmasi.
+Mulai dari **Biaya & pengaturan** untuk mengisi detail paket dan kurs, lalu tambahkan akomodasi dan transportasi. Input angka memakai format Indonesia dengan titik pemisah ribuan dan koma desimal. Ringkasan menampilkan checklist data, rincian HPP, harga jual, dan gross profit.
 
 ## Penyimpanan dan cadangan
 
-Data disimpan otomatis pada browser dan perangkat yang sedang digunakan. Unduh cadangan JSON secara berkala untuk memindahkan atau memulihkan data; pemulihan mengganti paket aktif dan daftar template setelah konfirmasi. Template menyimpan salinan konfigurasi untuk digunakan kembali tanpa mengubah paket aktif sampai dipilih.
+Perubahan disimpan otomatis di browser dan perangkat yang sedang digunakan, termasuk saat halaman ditutup atau dimuat ulang. Data tidak tersinkron otomatis ke browser/perangkat lain. Unduh cadangan JSON secara berkala untuk memindahkan atau memulihkan data; pemulihan mengganti paket aktif dan daftar template setelah konfirmasi.
+
+## Instalasi dan penggunaan offline
+
+Setelah aplikasi dibuka melalui HTTPS, gunakan pilihan **Install app / Tambahkan ke layar utama** dari browser. Setelah aset aplikasi selesai dimuat dan tersimpan, kalkulasi dapat digunakan offline; pembaruan kurs otomatis tetap memerlukan internet.

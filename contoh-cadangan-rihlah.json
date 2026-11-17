@@ -1,0 +1,72 @@
+{
+  "format": "rihlah-umrah-calculator-backup",
+  "version": 1,
+  "exportedAt": "2026-11-17T05:30:00.000Z",
+  "data": {
+    "company": "Rihlah Travel (Contoh)",
+    "packageName": "Umrah Reguler 12 Hari - Data Dummy",
+    "departure": "2027-02-15",
+    "pax": 20,
+    "exchange": 4300,
+    "exchangeSource": "manual",
+    "exchangeUpdatedAt": "2026-11-17T05:30:00.000Z",
+    "exchangeFetchedAt": "",
+    "markup": 15,
+    "nightsMakkah": 5,
+    "nightsMadinah": 5,
+    "duration": 12,
+    "direct": {
+      "visa": 1500000,
+      "flight": 850,
+      "zamzam": 80,
+      "porter": 50
+    },
+    "directCurrency": {
+      "visa": "IDR",
+      "flight": "SAR",
+      "zamzam": "SAR",
+      "porter": "SAR"
+    },
+    "shared": {
+      "airport": 350,
+      "hotel": 0,
+      "guide": 1200,
+      "other": 100
+    },
+    "sharedCurrency": {
+      "airport": "SAR",
+      "hotel": "SAR",
+      "guide": "SAR",
+      "other": "SAR"
+    },
+    "hotels": [
+      {
+        "id": "hotel-makkah-contoh",
+        "city": "Makkah",
+        "category": "Quad",
+        "name": "Hotel Contoh Al-Misk",
+        "price": 250,
+        "currency": "SAR",
+        "nights": 5,
+        "rooms": 5,
+        "capacity": 4,
+        "pax": 20,
+        "meal": 35,
+        "mealDays": 10
+      }
+    ],
+    "apartments": [],
+    "transport": [
+      {
+        "id": "transport-jeddah-makkah",
+        "route": "Jeddah - Makkah - Madinah",
+        "description": "Bus rombongan (simulasi)",
+        "price": 1800,
+        "currency": "SAR",
+        "units": 2,
+        "pax": 20
+      }
+    ]
+  },
+  "templates": []
+}
