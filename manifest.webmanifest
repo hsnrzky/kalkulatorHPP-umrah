@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "Rihlah — Kalkulator HPP Umroh",
+  "short_name": "Rihlah HPP",
+  "description": "Kalkulator biaya dan harga paket perjalanan umroh.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f8f6",
+  "theme_color": "#f5f7f2",
+  "icons": [
+    {
+      "src": "./rihlah-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./rihlah-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
