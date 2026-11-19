@@ -5,7 +5,7 @@ type Div = HTMLAttributes<HTMLDivElement>;
 
 /** Surface with a border. Compose with CardHeader, CardContent and CardFooter. */
 export function Card({ className, ...rest }: Div) {
-  return <div className={cn("rounded-2xl border bg-card text-[13px] text-card-foreground shadow-xs", className)} {...rest} />;
+  return <div className={cn("min-w-0 rounded-2xl border bg-card text-[13px] text-card-foreground shadow-xs", className)} {...rest} />;
 }
 
 export function CardHeader({ className, ...rest }: Div) {

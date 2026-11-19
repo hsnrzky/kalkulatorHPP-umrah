@@ -20,6 +20,7 @@ export const initialData = {
   hotels: [],
   apartments: [],
   transport: [],
+  otherCosts: [],
 };
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -51,9 +52,52 @@ const normalizedCurrencies = (values, defaults) =>
         : "SAR",
     ]),
   );
+const normalizeLodgingRows = (rows, prefix) =>
+  normalizeRows(rows, prefix).map((row) => ({
+    ...row,
+    checkIn: typeof row.checkIn === "string" ? row.checkIn : "",
+    checkOut: typeof row.checkOut === "string" ? row.checkOut : "",
+    nightsMode:
+      row.nightsMode === "auto" || row.nightsMode === "manual"
+        ? row.nightsMode
+        : !row.checkIn && !row.checkOut
+          ? "manual"
+          : "auto",
+  }));
+const normalizeOtherCosts = (rows) =>
+  normalizeRows(rows, "other-cost").map((row) => ({
+    ...row,
+    name: typeof row.name === "string" ? row.name : "",
+    amount: num(row.amount),
+    currency: row.currency === "IDR" ? "IDR" : "SAR",
+    calculation: row.calculation === "pax" ? "pax" : "total",
+  }));
+const nightsBetween = (checkIn, checkOut) => {
+  if (!checkIn || !checkOut) return 0;
+  const start = Date.parse(`${checkIn}T00:00:00Z`);
+  const end = Date.parse(`${checkOut}T00:00:00Z`);
+  return Number.isFinite(start) && Number.isFinite(end) && end > start
+    ? Math.round((end - start) / 86_400_000)
+    : 0;
+};
 
 export function normalizeData(saved) {
   if (!isRecord(saved)) throw new Error("Data paket harus berupa objek JSON.");
+
+  const shared = normalizedAmounts(saved.shared, initialData.shared);
+  const otherCosts =
+    saved.otherCosts === undefined && num(saved.shared?.other) > 0
+      ? [
+          {
+            id: "legacy-other-cost",
+            name: "Biaya lainnya",
+            amount: num(saved.shared.other),
+            currency: saved.sharedCurrency?.other === "IDR" ? "IDR" : "SAR",
+            calculation: "total",
+          },
+        ]
+      : normalizeOtherCosts(saved.otherCosts);
+  shared.other = 0;
 
   return {
     ...clone(initialData),
@@ -75,11 +119,12 @@ export function normalizeData(saved) {
     duration: num(saved.duration ?? initialData.duration),
     direct: normalizedAmounts(saved.direct, initialData.direct),
     directCurrency: normalizedCurrencies(saved.directCurrency, initialData.directCurrency),
-    shared: normalizedAmounts(saved.shared, initialData.shared),
+    shared,
     sharedCurrency: normalizedCurrencies(saved.sharedCurrency, initialData.sharedCurrency),
-    hotels: normalizeRows(saved.hotels, "hotel"),
-    apartments: normalizeRows(saved.apartments, "apartment"),
+    hotels: normalizeLodgingRows(saved.hotels, "hotel"),
+    apartments: normalizeLodgingRows(saved.apartments, "apartment"),
     transport: normalizeRows(saved.transport, "transport"),
+    otherCosts,
   };
 }
 
@@ -107,8 +152,11 @@ export function loadData() {
 
 export function summarize(data) {
   const hotelRows = data.hotels.map((row) => {
+    const nights = row.nightsMode === "auto"
+      ? nightsBetween(row.checkIn, row.checkOut)
+      : num(row.nights);
     const cost = toIdr(
-      num(row.price) * num(row.nights) * num(row.rooms),
+      num(row.price) * nights * num(row.rooms),
       rowCurrency(row),
       data.exchange,
     );
@@ -116,6 +164,7 @@ export function summarize(data) {
       kind: "hotel",
       row,
       cost,
+      nights,
       people: num(row.pax),
       cap: num(row.rooms) * num(row.capacity),
     };
@@ -147,13 +196,24 @@ export function summarize(data) {
       sum + toIdr(value, data.sharedCurrency[key], data.exchange),
     0,
   );
+  const passengerCount = num(data.pax);
+  const otherCostsTotal = data.otherCosts.reduce(
+    (sum, row) =>
+      sum +
+      toIdr(
+        num(row.amount) * (row.calculation === "pax" ? passengerCount : 1),
+        rowCurrency(row),
+        data.exchange,
+      ),
+    0,
+  );
   const directPerPax = Object.entries(data.direct).reduce(
     (sum, [key, value]) =>
       sum + toIdr(value, data.directCurrency[key], data.exchange),
     0,
   );
-  const commonPerPax = num(data.pax)
-    ? (sharedTotal + transportTotal) / num(data.pax) + directPerPax
+  const commonPerPax = passengerCount
+    ? (sharedTotal + transportTotal + otherCostsTotal) / passengerCount + directPerPax
     : 0;
 
   rows.forEach((item) => {
@@ -173,7 +233,6 @@ export function summarize(data) {
   const costTotal = rows.reduce((sum, item) => sum + item.costTotal, 0);
   const revenue = rows.reduce((sum, item) => sum + item.sellTotal, 0);
   const allocated = rows.reduce((sum, item) => sum + item.people, 0);
-  const passengerCount = num(data.pax);
   const accommodationTotal = rows.reduce(
     (sum, item) => sum + (item.people ? item.cost : 0),
     0,
@@ -189,8 +248,9 @@ export function summarize(data) {
         transport: (transportTotal * allocated) / passengerCount ** 2,
         shared: (sharedTotal * allocated) / passengerCount ** 2,
         direct: (directPerPax * allocated) / passengerCount,
+        otherCosts: (otherCostsTotal * allocated) / passengerCount ** 2,
       }
-    : { accommodation: 0, meals: 0, transport: 0, shared: 0, direct: 0 };
+    : { accommodation: 0, meals: 0, transport: 0, shared: 0, direct: 0, otherCosts: 0 };
   const hasLodging = rows.some((item) => item.cost > 0 || item.people > 0);
   const issues = rows.filter(
     (item) => item.people > item.cap || (item.cost > 0 && !item.people),
@@ -200,6 +260,7 @@ export function summarize(data) {
     rows,
     transportTotal,
     sharedTotal,
+    otherCostsTotal,
     directPerPax,
     commonPerPax,
     costBreakdownPerPax,
@@ -219,7 +280,7 @@ export function validatePackage(data, totals) {
   const add = (id, message, page) => warnings.push({ id, message, page });
   const text = (value) => (typeof value === "string" ? value.trim() : "");
   const pax = num(data.pax);
-  const lodgingPage = data.hotels.length ? "hotel" : "apartments";
+  const lodgingPage = "lodging";
 
   if (!text(data.company)) add("company", "Nama travel belum diisi.", "other-costs");
   if (!text(data.packageName)) add("package-name", "Nama paket belum diisi.", "other-costs");
@@ -227,28 +288,36 @@ export function validatePackage(data, totals) {
   if (!pax) add("pax", "Jumlah jamaah harus lebih dari nol.", "other-costs");
 
   if (!data.hotels.length && !data.apartments.length) {
-    add("lodging", "Tambahkan hotel atau apartemen untuk menghitung biaya akomodasi.", "hotel");
+    add("lodging", "Tambahkan hotel atau apartemen untuk menghitung biaya akomodasi.", "lodging");
   }
 
   data.hotels.forEach((row, index) => {
     const label = text(row.name) || text(row.city) || `Hotel ${index + 1}`;
-    if (!num(row.price)) add(`hotel-price-${row.id}`, `Tarif ${label} belum diisi.`, "hotel");
-    if (!num(row.nights)) add(`hotel-nights-${row.id}`, `Jumlah malam ${label} belum diisi.`, "hotel");
-    if (!num(row.rooms)) add(`hotel-rooms-${row.id}`, `Jumlah kamar ${label} belum diisi.`, "hotel");
-    if (!num(row.pax)) add(`hotel-pax-${row.id}`, `Alokasi jamaah untuk ${label} belum diisi.`, "hotel");
+    const nights = row.nightsMode === "auto"
+      ? nightsBetween(row.checkIn, row.checkOut)
+      : num(row.nights);
+    if (!num(row.price)) add(`hotel-price-${row.id}`, `Tarif ${label} belum diisi.`, "lodging");
+    if (!nights) add(`hotel-nights-${row.id}`, `Jumlah malam ${label} belum diisi.`, "lodging");
+    if (!num(row.rooms)) add(`hotel-rooms-${row.id}`, `Jumlah kamar ${label} belum diisi.`, "lodging");
+    if (!num(row.pax)) add(`hotel-pax-${row.id}`, `Alokasi jamaah untuk ${label} belum diisi.`, "lodging");
   });
 
   data.apartments.forEach((row, index) => {
     const label = text(row.name) || text(row.city) || `Apartemen ${index + 1}`;
-    if (!num(row.price)) add(`apartment-price-${row.id}`, `Tarif ${label} belum diisi.`, "apartments");
-    if (!num(row.units)) add(`apartment-units-${row.id}`, `Jumlah unit ${label} belum diisi.`, "apartments");
-    if (!num(row.pax)) add(`apartment-pax-${row.id}`, `Alokasi jamaah untuk ${label} belum diisi.`, "apartments");
+    if (!num(row.price)) add(`apartment-price-${row.id}`, `Tarif ${label} belum diisi.`, "lodging");
+    if (!num(row.units)) add(`apartment-units-${row.id}`, `Jumlah unit ${label} belum diisi.`, "lodging");
+    if (!num(row.pax)) add(`apartment-pax-${row.id}`, `Alokasi jamaah untuk ${label} belum diisi.`, "lodging");
   });
 
   data.transport.forEach((row, index) => {
     const label = text(row.route) || `Transportasi ${index + 1}`;
     if (!num(row.price)) add(`transport-price-${row.id}`, `Biaya ${label} belum diisi.`, "transport");
     if (!num(row.units)) add(`transport-units-${row.id}`, `Jumlah kendaraan ${label} belum diisi.`, "transport");
+  });
+
+  data.otherCosts.forEach((row, index) => {
+    const label = text(row.name) || `Biaya lainnya ${index + 1}`;
+    if (!num(row.amount)) add(`other-cost-amount-${row.id}`, `Nominal ${label} belum diisi.`, "custom-costs");
   });
 
   if (pax && totals.allocated < pax) {
@@ -282,7 +351,8 @@ export function validatePackage(data, totals) {
     ) ||
     [...data.hotels, ...data.apartments, ...data.transport].some(
       (row) => rowCurrency(row) === "SAR" && (num(row.price) > 0 || num(row.meal) > 0),
-    );
+    ) ||
+    data.otherCosts.some((row) => rowCurrency(row) === "SAR" && num(row.amount) > 0);
   if (hasSarCosts && !num(data.exchange)) {
     add("exchange", "Kurs SAR/IDR belum valid, sehingga biaya SAR tidak dapat dikonversi.", "other-costs");
   }

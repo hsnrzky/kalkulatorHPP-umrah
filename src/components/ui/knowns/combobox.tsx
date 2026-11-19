@@ -685,7 +685,7 @@ export function Combobox(props: ComboboxProps) {
             data-state={closing ? "closed" : "open"}
             style={style}
             className={cn(
-              "z-[60] flex min-w-[180px] flex-col overflow-hidden rounded-xl bg-popover text-[13px] text-popover-foreground",
+              "z-[60] flex flex-col overflow-hidden rounded-xl bg-popover text-[13px] text-popover-foreground",
               "shadow-[0_0_0_1px_color-mix(in_srgb,var(--foreground)_12%,transparent),0_12px_32px_-12px_rgb(0_0_0/0.3),0_2px_6px_rgb(0_0_0/0.06)]",
               FLOAT_FADE,
             )}

@@ -14,6 +14,6 @@ Pada **Ringkasan**, pilih **Cetak ke PDF** untuk membuat lembar audit berisi asu
 
 Perubahan disimpan otomatis di browser dan perangkat yang sedang digunakan, termasuk saat halaman ditutup atau dimuat ulang. Data tidak tersinkron otomatis ke browser/perangkat lain. Unduh cadangan JSON secara berkala untuk memindahkan atau memulihkan data; pemulihan mengganti paket aktif dan daftar template setelah konfirmasi.
 
-## Instalasi dan penggunaan offline
+## Instalasi dan penggunaan offline 
 
 Setelah aplikasi dibuka melalui HTTPS, gunakan pilihan **Install app / Tambahkan ke layar utama** dari browser. Setelah aset aplikasi selesai dimuat dan tersimpan, kalkulasi dapat digunakan offline; pembaruan kurs otomatis tetap memerlukan internet.

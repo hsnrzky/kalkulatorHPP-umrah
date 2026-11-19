@@ -245,7 +245,7 @@ export function useFloating<T extends HTMLElement = HTMLElement, F extends HTMLE
     left: pos?.x ?? 0,
     top: pos?.y ?? 0,
     maxHeight: pos?.maxHeight,
-    maxWidth: pos && (pos.placement === "left" || pos.placement === "right") ? pos.maxWidth : undefined,
+    maxWidth: pos?.maxWidth,
     width: pos?.width,
     // Hidden (but measurable) until the first placement.
     visibility: pos ? undefined : "hidden",

@@ -2,27 +2,28 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "re
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import {
-  ArrowDownToLine,
   ArrowRight,
-  BadgeCheck,
-  BedDouble,
-  Building2,
-  BusFront,
-  CalendarDays,
-  CircleDollarSign,
-  Clock3,
-  FileText,
-  LayoutDashboard,
-  Moon,
+  CheckVerified01 as BadgeCheck,
+  Building02 as BedDouble,
+  Building01 as Building2,
+  Bus as BusFront,
+  Calendar as CalendarDays,
+  Coins01 as CircleDollarSign,
+  Clock as Clock3,
+  Download01 as ArrowDownToLine,
+  File06 as FileText,
+  LayoutAlt02 as LayoutDashboard,
+  Moon01 as Moon,
   Plus,
-  RefreshCw,
-  Settings2,
+  RefreshCw01 as RefreshCw,
+  Settings01 as Settings2,
   Sun,
-  Trash2,
-  Upload,
-  Users,
-} from "lucide-react";
+  Trash01 as Trash2,
+  Upload01 as Upload,
+  Users01 as Users,
+} from "@untitledui/icons";
 import { AppShell } from "@/components/ui/knowns/blocks/app-shell/app-shell";
+import { DatePicker } from "@/components/ui/knowns/date-picker";
 import {
   Badge,
 } from "@/components/ui/knowns/badge";
@@ -54,6 +55,22 @@ import "./input.css";
 const currencyOptions = [
   { value: "SAR", label: "SAR", description: "Riyal Saudi" },
   { value: "IDR", label: "IDR", description: "Rupiah Indonesia" },
+];
+const accommodationOptions = [
+  { value: "hotel", label: "Hotel" },
+  { value: "apartments", label: "Apartemen" },
+];
+const roomTypeOptions = ["Quad", "Triple", "Double", "Single"].map((value) => ({
+  value,
+  label: value,
+}));
+const nightModeOptions = [
+  { value: "auto", label: "Otomatis dari tanggal" },
+  { value: "manual", label: "Isi manual" },
+];
+const otherCostModeOptions = [
+  { value: "total", label: "Total paket" },
+  { value: "pax", label: "Per jamaah" },
 ];
 const THEME_STORAGE_KEY = "rihlah-theme";
 const TEMPLATE_STORAGE_KEY = "rihlah-package-templates-v1";
@@ -104,9 +121,9 @@ const mainNav = [
 ];
 
 const costNav = [
-  { id: "hotel", label: "Hotel", icon: <BedDouble /> },
-  { id: "apartments", label: "Apartemen", icon: <Building2 /> },
+  { id: "lodging", label: "Hotel & Apartemen", icon: <BedDouble /> },
   { id: "transport", label: "Transportasi", icon: <BusFront /> },
+  { id: "custom-costs", label: "Biaya lainnya", icon: <CircleDollarSign /> },
   { id: "other-costs", label: "Biaya & pengaturan", icon: <Settings2 /> },
 ];
 
@@ -120,20 +137,20 @@ const pageDetails = {
     title: "Ringkasan paket",
     description: "Pantau HPP, harga jual, dan alokasi biaya paket umroh.",
   },
-  hotel: {
-    label: "Hotel",
-    title: "Biaya hotel",
-    description: "Atur tarif kamar, jumlah malam, dan alokasi jamaah per hotel.",
-  },
-  apartments: {
-    label: "Apartemen",
-    title: "Biaya apartemen",
-    description: "Kelola akomodasi apartemen dan alokasi biaya per jamaah.",
+  lodging: {
+    label: "Hotel & Apartemen",
+    title: "Hotel & Apartemen",
+    description: "Atur akomodasi hotel dan apartemen dalam satu daftar.",
   },
   transport: {
     label: "Transportasi",
     title: "Transportasi",
     description: "Catat rute dan biaya transportasi rombongan.",
+  },
+  "custom-costs": {
+    label: "Biaya lainnya",
+    title: "Biaya lainnya",
+    description: "Tambahkan biaya khusus dengan perhitungan total paket atau per jamaah.",
   },
   "other-costs": {
     label: "Biaya & pengaturan",
@@ -177,6 +194,15 @@ function formatGroupedNumber(value) {
   return Number.isFinite(number) && number !== 0
     ? new Intl.NumberFormat("id-ID", { maximumFractionDigits: 8 }).format(number)
     : "";
+}
+
+function dateNightCount(checkIn, checkOut) {
+  if (!checkIn || !checkOut) return 0;
+  const start = Date.parse(`${checkIn}T00:00:00Z`);
+  const end = Date.parse(`${checkOut}T00:00:00Z`);
+  return Number.isFinite(start) && Number.isFinite(end) && end > start
+    ? Math.round((end - start) / 86_400_000)
+    : 0;
 }
 
 function formatNumberDraft(value) {
@@ -441,6 +467,7 @@ function Overview({ data, totals, warnings, setPage }) {
     ["Konsumsi", totals.costBreakdownPerPax.meals],
     ["Transportasi", totals.costBreakdownPerPax.transport],
     ["Biaya bersama", totals.costBreakdownPerPax.shared],
+    ["Biaya lainnya", totals.costBreakdownPerPax.otherCosts],
     ["Biaya langsung", totals.costBreakdownPerPax.direct],
   ];
 
@@ -519,7 +546,7 @@ function Overview({ data, totals, warnings, setPage }) {
               variant="secondary"
               size="sm"
               iconRight={<ArrowRight />}
-              onClick={() => setPage("hotel")}
+              onClick={() => setPage("lodging")}
             >
               Kelola biaya
             </Button>
@@ -673,7 +700,6 @@ function AuditPrintReport({ data, totals, warnings }) {
     airport: "Handling bandara",
     hotel: "Biaya hotel bersama",
     guide: "Muthawif / guide",
-    other: "Biaya lainnya",
   };
   const convertedAmount = (amount, currency) => {
     const raw = new Intl.NumberFormat("id-ID", {
@@ -749,6 +775,7 @@ function AuditPrintReport({ data, totals, warnings }) {
               ["Konsumsi", totals.costBreakdownPerPax.meals],
               ["Transportasi", totals.costBreakdownPerPax.transport],
               ["Biaya bersama", totals.costBreakdownPerPax.shared],
+              ["Biaya lainnya", totals.costBreakdownPerPax.otherCosts],
               ["Biaya langsung", totals.costBreakdownPerPax.direct],
             ].map(([label, amount]) => (
               <tr key={label}><td>{label}</td><td>{fmt(amount)}</td></tr>
@@ -777,7 +804,7 @@ function AuditPrintReport({ data, totals, warnings }) {
                 const row = item.row;
                 const quantity =
                   item.kind === "hotel"
-                    ? `${integer(row.rooms)} kamar × ${integer(row.nights)} malam`
+                    ? `${integer(row.rooms)} kamar × ${integer(item.nights)} malam`
                     : `${integer(row.units)} unit`;
                 return (
                   <tr key={row.id}>
@@ -826,13 +853,28 @@ function AuditPrintReport({ data, totals, warnings }) {
                 </tr>
               );
             })}
-            {Object.entries(data.shared).map(([key, amount]) => {
+            {Object.entries(data.shared).filter(([, amount]) => num(amount) > 0).map(([key, amount]) => {
               const currency = data.sharedCurrency[key] === "IDR" ? "IDR" : "SAR";
               return (
                 <tr key={`shared-${key}`}>
                   <td>Biaya bersama: {sharedLabels[key] || key}</td>
                   <td>{convertedAmount(amount, currency)} · total paket</td>
                   <td>{fmt(num(amount) * (currency === "SAR" ? num(data.exchange) : 1))}</td>
+                </tr>
+              );
+            })}
+            {data.otherCosts.map((row) => {
+              const currency = rowCurrency(row);
+              const quantity = row.calculation === "pax" ? num(data.pax) : 1;
+              const amount = num(row.amount) * quantity;
+              return (
+                <tr key={`other-cost-${row.id}`}>
+                  <td>Biaya lainnya: {row.name || "Tanpa nama"}</td>
+                  <td>
+                    {convertedAmount(row.amount, currency)}
+                    {row.calculation === "pax" ? ` × ${integer(quantity)} jamaah` : " · total paket"}
+                  </td>
+                  <td>{fmt(amount * (currency === "SAR" ? num(data.exchange) : 1))}</td>
                 </tr>
               );
             })}
@@ -848,6 +890,7 @@ function AuditPrintReport({ data, totals, warnings }) {
             })}
             {!data.transport.length &&
               !Object.values(data.shared).some((amount) => num(amount)) &&
+              !data.otherCosts.length &&
               !Object.values(data.direct).some((amount) => num(amount)) && (
                 <tr><td colSpan="3">Belum ada biaya transportasi atau biaya tambahan.</td></tr>
               )}
@@ -885,7 +928,7 @@ function InfoRow({ icon: Icon, label, value }) {
   );
 }
 
-function AccommodationPage({
+function LegacyAccommodationPage({
   kind,
   rows,
   totals,
@@ -1241,7 +1284,272 @@ function AccommodationPage({
   );
 }
 
-function TransportPage({ rows, total, exchange, updateRow, removeRow, addRow }) {
+function AccommodationPage({
+  hotels,
+  apartments,
+  totals,
+  updateRow,
+  moveRow,
+  removeRow,
+  addRow,
+}) {
+  const rows = [
+    ...hotels.map((row) => ({ row, kind: "hotel" })),
+    ...apartments.map((row) => ({ row, kind: "apartments" })),
+  ];
+  const rowTotal = totals.rows.reduce((sum, item) => sum + item.cost, 0);
+
+  return (
+    <>
+      <PageHeading
+        eyebrow="Rincian biaya"
+        title="Hotel & Apartemen"
+        description="Hotel dihitung berdasarkan kamar × malam; apartemen berdasarkan tarif periode × unit."
+        icon={BedDouble}
+      />
+      <Card className="min-w-0">
+        <CardHeader className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0">
+            <CardTitle>Daftar akomodasi</CardTitle>
+            <CardDescription>
+              Hotel: malam otomatis dari tanggal atau isi manual. Total akomodasi {fmt(rowTotal)}.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button icon={<Plus />} onClick={() => addRow("hotel")}>Tambah Hotel</Button>
+            <Button variant="secondary" icon={<Plus />} onClick={() => addRow("apartments")}>
+              Tambah Apartemen
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="min-w-0 space-y-4">
+          {rows.length ? rows.map(({ row, kind }) => {
+            const isHotel = kind === "hotel";
+            const update = (key, value) => updateRow(kind, row.id, key, value);
+            const nights = row.nightsMode === "auto"
+              ? dateNightCount(row.checkIn, row.checkOut)
+              : num(row.nights);
+            const item = totals.rows.find((entry) => entry.kind === kind && entry.row.id === row.id);
+            const checkInId = `check-in-${row.id}`;
+            const checkOutId = `check-out-${row.id}`;
+
+            return (
+              <div key={`${kind}-${row.id}`} className="min-w-0 space-y-4 rounded-xl border p-3 sm:p-4">
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                  <KnownField id={`kind-${row.id}`} label="Jenis" className="min-w-0">
+                    <Combobox
+                      id={`kind-${row.id}`}
+                      size="sm"
+                      value={kind}
+                      options={accommodationOptions}
+                      onValueChange={(value) => moveRow(kind, row.id, value)}
+                    />
+                  </KnownField>
+                  <TextField
+                    label="Kota"
+                    value={row.city}
+                    placeholder="Makkah"
+                    onChange={(event) => update("city", event.target.value)}
+                  />
+                  <TextField
+                    label={isHotel ? "Kota / Nama hotel" : "Kota / Nama apartemen"}
+                    value={row.name}
+                    placeholder={isHotel ? "Nama hotel" : "Nama apartemen"}
+                    onChange={(event) => update("name", event.target.value)}
+                  />
+                  <KnownField id={checkInId} label="Check-in" className="min-w-0">
+                    <DatePicker
+                      id={checkInId}
+                      variant="field"
+                      size="sm"
+                      value={row.checkIn || ""}
+                      onValueChange={(value) => update("checkIn", value)}
+                    />
+                  </KnownField>
+                  <KnownField id={checkOutId} label="Check-out" className="min-w-0">
+                    <DatePicker
+                      id={checkOutId}
+                      variant="field"
+                      size="sm"
+                      value={row.checkOut || ""}
+                      onValueChange={(value) => update("checkOut", value)}
+                    />
+                  </KnownField>
+                </div>
+
+                {isHotel ? (
+                  <>
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                      <KnownField id={`nights-mode-${row.id}`} label="Perhitungan malam" className="min-w-0">
+                        <Combobox
+                          id={`nights-mode-${row.id}`}
+                          size="sm"
+                          value={row.nightsMode || "auto"}
+                          options={nightModeOptions}
+                          onValueChange={(value) => update("nightsMode", value)}
+                        />
+                      </KnownField>
+                      {row.nightsMode === "manual" ? (
+                        <TextField
+                          label="Jumlah malam hotel"
+                          type="number"
+                          min="0"
+                          value={row.nights}
+                          onChange={(event) => update("nights", num(event.target.value))}
+                        />
+                      ) : (
+                        <div className="flex flex-col justify-center gap-1.5">
+                          <span className="text-xs font-medium text-muted-foreground">Jumlah malam</span>
+                          <p className="text-sm font-medium">{integer(nights)} malam</p>
+                        </div>
+                      )}
+                      <TextField
+                        label="Jamaah pengguna"
+                        type="number"
+                        min="0"
+                        value={row.pax}
+                        onChange={(event) => update("pax", num(event.target.value))}
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold">Kombinasi tipe kamar</h3>
+                      <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                        <KnownField id={`room-type-${row.id}`} label="Tipe kamar" className="min-w-0">
+                          <Combobox
+                            id={`room-type-${row.id}`}
+                            size="sm"
+                            value={row.category || "Quad"}
+                            options={roomTypeOptions}
+                            onValueChange={(value) => update("category", value)}
+                          />
+                        </KnownField>
+                        <TextField
+                          label="Jumlah kamar"
+                          type="number"
+                          min="0"
+                          value={row.rooms}
+                          onChange={(event) => update("rooms", num(event.target.value))}
+                        />
+                        <TextField
+                          label="Tarif / kamar / malam"
+                          type="number"
+                          min="0"
+                          value={row.price}
+                          onChange={(event) => update("price", num(event.target.value))}
+                        />
+                        <KnownField id={`currency-${row.id}`} label="Mata uang" className="min-w-0">
+                          <Combobox
+                            id={`currency-${row.id}`}
+                            size="sm"
+                            value={rowCurrency(row)}
+                            options={currencyOptions}
+                            onValueChange={(value) => update("currency", value)}
+                          />
+                        </KnownField>
+                        <TextField
+                          label="Kapasitas / kamar"
+                          type="number"
+                          min="0"
+                          value={row.capacity}
+                          onChange={(event) => update("capacity", num(event.target.value))}
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                    <TextField
+                      label="Tarif periode / unit"
+                      type="number"
+                      min="0"
+                      value={row.price}
+                      onChange={(event) => update("price", num(event.target.value))}
+                    />
+                    <KnownField id={`currency-${row.id}`} label="Mata uang" className="min-w-0">
+                      <Combobox
+                        id={`currency-${row.id}`}
+                        size="sm"
+                        value={rowCurrency(row)}
+                        options={currencyOptions}
+                        onValueChange={(value) => update("currency", value)}
+                      />
+                    </KnownField>
+                    <TextField
+                      label="Jumlah unit"
+                      type="number"
+                      min="0"
+                      value={row.units}
+                      onChange={(event) => update("units", num(event.target.value))}
+                    />
+                    <TextField
+                      label="Kapasitas / unit"
+                      type="number"
+                      min="0"
+                      value={row.capacity}
+                      onChange={(event) => update("capacity", num(event.target.value))}
+                    />
+                    <TextField
+                      label="Jamaah pengguna"
+                      type="number"
+                      min="0"
+                      value={row.pax}
+                      onChange={(event) => update("pax", num(event.target.value))}
+                    />
+                  </div>
+                )}
+
+                <details className="group rounded-lg border px-3 py-2">
+                  <summary className="cursor-pointer text-sm font-medium">Konsumsi (opsional)</summary>
+                  <div className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
+                    <TextField
+                      label="Konsumsi / pax / hari"
+                      type="number"
+                      min="0"
+                      value={row.meal}
+                      onChange={(event) => update("meal", num(event.target.value))}
+                    />
+                    <TextField
+                      label="Hari konsumsi"
+                      type="number"
+                      min="0"
+                      value={row.mealDays}
+                      onChange={(event) => update("mealDays", num(event.target.value))}
+                    />
+                  </div>
+                </details>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+                  <div className="text-xs">
+                    <p className="font-medium">Total: {fmt(item?.cost || 0)}</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Biaya per jamaah pengguna: {fmt(item?.costPerPax || 0)}
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    icon={<Trash2 />}
+                    aria-label={`Hapus ${isHotel ? "hotel" : "apartemen"} ${row.name || row.city || ""}`}
+                    onClick={() => removeRow(kind, row.id)}
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              </div>
+            );
+          }) : (
+            <EmptyNotice>Belum ada hotel atau apartemen. Pilih tombol Tambah untuk memasukkan akomodasi.</EmptyNotice>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Kurs saat ini: 1 SAR = {fmt(num(totals.exchange || 0))}. Biaya IDR digunakan langsung tanpa konversi.
+          </p>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function LegacyTransportPage({ rows, total, exchange, updateRow, removeRow, addRow }) {
   const columns = [
     {
       key: "route",
@@ -1384,6 +1692,186 @@ function TransportPage({ rows, total, exchange, updateRow, removeRow, addRow }) 
   );
 }
 
+function TransportPage({ rows, total, exchange, updateRow, removeRow, addRow }) {
+  return (
+    <>
+      <PageHeading
+        eyebrow="Rincian biaya"
+        title="Transportasi"
+        description="Masukkan tarif per kendaraan, jumlah kendaraan, dan jamaah yang memakai setiap rute."
+        icon={BusFront}
+      />
+      <Card className="min-w-0">
+        <CardHeader className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0">
+            <CardTitle>Daftar transportasi</CardTitle>
+            <CardDescription>Total biaya transportasi: {fmt(total)}.</CardDescription>
+          </div>
+          <Button icon={<Plus />} onClick={() => addRow("transport")}>Tambah transportasi</Button>
+        </CardHeader>
+        <CardContent className="min-w-0 space-y-4">
+          {rows.length ? rows.map((row) => {
+            const update = (key, value) => updateRow("transport", row.id, key, value);
+            const totalCost = num(row.price) * num(row.units) * (rowCurrency(row) === "SAR" ? num(exchange) : 1);
+            return (
+              <div key={row.id} className="min-w-0 space-y-4 rounded-xl border p-3 sm:p-4">
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <TextField
+                    label="Rute perjalanan"
+                    value={row.route}
+                    placeholder="Jeddah – Makkah"
+                    onChange={(event) => update("route", event.target.value)}
+                  />
+                  <TextField
+                    label="Jenis / keterangan kendaraan"
+                    value={row.description}
+                    placeholder="Bus rombongan"
+                    onChange={(event) => update("description", event.target.value)}
+                  />
+                  <TextField
+                    label="Tarif per kendaraan"
+                    type="number"
+                    min="0"
+                    value={row.price}
+                    onChange={(event) => update("price", num(event.target.value))}
+                  />
+                  <KnownField id={`transport-currency-${row.id}`} label="Mata uang" className="min-w-0">
+                    <Combobox
+                      id={`transport-currency-${row.id}`}
+                      value={rowCurrency(row)}
+                      options={currencyOptions}
+                      onValueChange={(value) => update("currency", value)}
+                    />
+                  </KnownField>
+                  <TextField
+                    label="Jumlah kendaraan"
+                    type="number"
+                    min="0"
+                    value={row.units}
+                    onChange={(event) => update("units", num(event.target.value))}
+                  />
+                  <TextField
+                    label="Jamaah pengguna rute"
+                    type="number"
+                    min="0"
+                    value={row.pax}
+                    onChange={(event) => update("pax", num(event.target.value))}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+                  <div className="text-xs">
+                    <p className="font-medium">Total: {fmt(totalCost)}</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Biaya per jamaah pengguna: {fmt(num(row.pax) ? totalCost / num(row.pax) : 0)}
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    icon={<Trash2 />}
+                    aria-label={`Hapus rute ${row.route || row.description || ""}`}
+                    onClick={() => removeRow("transport", row.id)}
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              </div>
+            );
+          }) : (
+            <EmptyNotice>Belum ada transportasi. Tambahkan rute untuk menghitung biaya kendaraan.</EmptyNotice>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Biaya transportasi menjadi biaya bersama paket dan dibagi ke jamaah yang dialokasikan.
+          </p>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function CustomCostsPage({ rows, total, exchange, pax, updateRow, removeRow, addRow }) {
+  return (
+    <>
+      <PageHeading
+        eyebrow="Rincian biaya"
+        title="Biaya lainnya"
+        description="Tambahkan biaya yang belum tercakup dan tentukan apakah nominal dihitung untuk total paket atau setiap jamaah."
+        icon={CircleDollarSign}
+      />
+      <Card className="min-w-0">
+        <CardHeader className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0">
+            <CardTitle>Biaya tambahan</CardTitle>
+            <CardDescription>Total biaya lainnya: {fmt(total)}.</CardDescription>
+          </div>
+          <Button icon={<Plus />} onClick={() => addRow("otherCosts")}>Tambah biaya</Button>
+        </CardHeader>
+        <CardContent className="min-w-0 space-y-4">
+          {rows.length ? rows.map((row) => {
+            const update = (key, value) => updateRow("otherCosts", row.id, key, value);
+            const amount = num(row.amount) * (row.calculation === "pax" ? num(pax) : 1);
+            const cost = amount * (rowCurrency(row) === "SAR" ? num(exchange) : 1);
+            return (
+              <div key={row.id} className="min-w-0 space-y-4 rounded-xl border p-3 sm:p-4">
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <TextField
+                    label="Nama biaya"
+                    value={row.name}
+                    placeholder="Contoh: perlengkapan"
+                    onChange={(event) => update("name", event.target.value)}
+                  />
+                  <TextField
+                    label={row.calculation === "pax" ? "Nominal / jamaah" : "Nominal"}
+                    type="number"
+                    min="0"
+                    value={row.amount}
+                    onChange={(event) => update("amount", num(event.target.value))}
+                  />
+                  <KnownField id={`other-cost-currency-${row.id}`} label="Mata uang" className="min-w-0">
+                    <Combobox
+                      id={`other-cost-currency-${row.id}`}
+                      value={rowCurrency(row)}
+                      options={currencyOptions}
+                      onValueChange={(value) => update("currency", value)}
+                    />
+                  </KnownField>
+                  <KnownField id={`other-cost-mode-${row.id}`} label="Perhitungan" className="min-w-0">
+                    <Combobox
+                      id={`other-cost-mode-${row.id}`}
+                      value={row.calculation || "total"}
+                      options={otherCostModeOptions}
+                      onValueChange={(value) => update("calculation", value)}
+                    />
+                  </KnownField>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+                  <p className="text-xs font-medium">
+                    Total: {fmt(cost)}{row.calculation === "pax" ? ` · ${integer(pax)} jamaah` : " · satu kali per paket"}
+                  </p>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    icon={<Trash2 />}
+                    aria-label={`Hapus biaya ${row.name || "lainnya"}`}
+                    onClick={() => removeRow("otherCosts", row.id)}
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              </div>
+            );
+          }) : (
+            <EmptyNotice>Belum ada biaya lainnya. Pilih “Tambah biaya” untuk menambahkan komponen.</EmptyNotice>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Nilai dalam SAR dikonversi memakai kurs paket. Nilai IDR digunakan langsung.
+          </p>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
 function OtherCostsPage({
   data,
   totals,
@@ -1412,7 +1900,6 @@ function OtherCostsPage({
     airport: "Handling bandara",
     hotel: "Biaya hotel bersama",
     guide: "Muthawif / guide",
-    other: "Biaya lainnya",
   };
 
   return (
@@ -1442,12 +1929,15 @@ function OtherCostsPage({
               placeholder="Paket umroh"
               onChange={(event) => updateSetting("packageName", event.target.value)}
             />
-            <TextField
-              label="Tanggal keberangkatan"
-              type="date"
-              value={data.departure}
-              onChange={(event) => updateSetting("departure", event.target.value)}
-            />
+            <KnownField id="departure-date" label="Tanggal keberangkatan" className="min-w-0">
+              <DatePicker
+                id="departure-date"
+                variant="field"
+                size="lg"
+                value={data.departure}
+                onValueChange={(value) => updateSetting("departure", value)}
+              />
+            </KnownField>
             <TextField
               label="Jumlah jamaah"
               type="number"
@@ -2217,14 +2707,46 @@ function App() {
     const id = globalThis.crypto?.randomUUID?.() || `row-${Date.now()}-${Math.random()}`;
     const row =
       group === "hotel"
-        ? { id, city: "", category: "", name: "", price: 0, currency: "SAR", nights: 0, rooms: 0, capacity: 4, pax: 0, meal: 0, mealDays: 0 }
+        ? { id, city: "", category: "Quad", name: "", price: 0, currency: "SAR", checkIn: "", checkOut: "", nightsMode: "auto", nights: 0, rooms: 1, capacity: 4, pax: 0, meal: 0, mealDays: 0 }
         : group === "apartments"
-          ? { id, city: "", name: "", price: 0, currency: "SAR", days: 0, units: 0, capacity: 4, pax: 0, meal: 0, mealDays: 0 }
-          : { id, route: "", description: "", price: 0, currency: "SAR", units: 1, pax: 0 };
+          ? { id, city: "", name: "", price: 0, currency: "SAR", checkIn: "", checkOut: "", days: 0, units: 1, capacity: 4, pax: 0, meal: 0, mealDays: 0 }
+          : group === "otherCosts"
+            ? { id, name: "", amount: 0, currency: "SAR", calculation: "total" }
+            : { id, route: "", description: "", price: 0, currency: "SAR", units: 1, pax: 0 };
     setData((current) => ({
       ...current,
       [collection]: [...current[collection], row],
     }));
+  };
+
+  const moveRow = (fromKind, id, toKind) => {
+    const from = fromKind === "hotel" ? "hotels" : "apartments";
+    const to = toKind === "hotel" ? "hotels" : "apartments";
+    if (from === to) return;
+    setData((current) => {
+      const row = current[from].find((item) => item.id === id);
+      if (!row) return current;
+      const moved =
+        toKind === "hotel"
+          ? {
+              ...row,
+              category: row.category || "Quad",
+              nightsMode: row.nightsMode || "auto",
+              nights: num(row.nights),
+              rooms: num(row.rooms) || 1,
+              capacity: num(row.capacity) || 4,
+            }
+          : {
+              ...row,
+              units: num(row.units) || 1,
+              capacity: num(row.capacity) || 4,
+            };
+      return {
+        ...current,
+        [from]: current[from].filter((item) => item.id !== id),
+        [to]: [...current[to], moved],
+      };
+    });
   };
 
   const removeRow = (group, id) => {
@@ -2312,22 +2834,13 @@ function App() {
         {page === "overview" && (
           <Overview data={data} totals={totals} warnings={warnings} setPage={setPage} />
         )}
-        {page === "hotel" && (
+        {page === "lodging" && (
           <AccommodationPage
-            kind="hotel"
-            rows={data.hotels}
+            hotels={data.hotels}
+            apartments={data.apartments}
             totals={{ ...totals, exchange: data.exchange }}
             updateRow={updateRow}
-            removeRow={removeRow}
-            addRow={addRow}
-          />
-        )}
-        {page === "apartments" && (
-          <AccommodationPage
-            kind="apartments"
-            rows={data.apartments}
-            totals={{ ...totals, exchange: data.exchange }}
-            updateRow={updateRow}
+            moveRow={moveRow}
             removeRow={removeRow}
             addRow={addRow}
           />
@@ -2337,6 +2850,17 @@ function App() {
             rows={data.transport}
             total={totals.transportTotal}
             exchange={data.exchange}
+            updateRow={updateRow}
+            removeRow={removeRow}
+            addRow={addRow}
+          />
+        )}
+        {page === "custom-costs" && (
+          <CustomCostsPage
+            rows={data.otherCosts}
+            total={totals.otherCostsTotal}
+            exchange={data.exchange}
+            pax={data.pax}
             updateRow={updateRow}
             removeRow={removeRow}
             addRow={addRow}
