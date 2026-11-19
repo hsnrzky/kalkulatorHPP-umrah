@@ -1,7 +1,7 @@
 {
   "id": "./",
   "name": "Rihlah — Kalkulator HPP Umroh",
-  "short_name": "Rihlah HPP",
+  "short_name": "Rihlah",
   "description": "Kalkulator biaya dan harga paket perjalanan umroh.",
   "start_url": "./",
   "scope": "./",
