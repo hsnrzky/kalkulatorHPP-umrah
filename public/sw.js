@@ -14,11 +14,26 @@ self.addEventListener("install", (event) => {
       const assets = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)]
         .map((match) => new URL(match[1], APP_ROOT).href)
         .filter((url) => new URL(url).origin === self.location.origin);
+      const stylesheetAssets = await Promise.all(
+        assets
+          .filter((url) => new URL(url).pathname.endsWith(".css"))
+          .map(async (url) => {
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`Stylesheet responded with HTTP ${response.status}`);
+            }
+            const stylesheet = await response.text();
+            return [...stylesheet.matchAll(/url\(\s*["']?([^)"']+)["']?\s*\)/g)]
+              .map((match) => new URL(match[1], url).href)
+              .filter((assetUrl) => new URL(assetUrl).origin === self.location.origin);
+          }),
+      );
       const staticFiles = [
         new URL("manifest.webmanifest", APP_ROOT).href,
         new URL("rihlah-icon.png", APP_ROOT).href,
         new URL("rihlah-icon-192.png", APP_ROOT).href,
         ...assets,
+        ...stylesheetAssets.flat(),
       ];
 
       await cache.addAll([...new Set(staticFiles)]);

@@ -16,4 +16,4 @@ Perubahan disimpan otomatis di browser dan perangkat yang sedang digunakan, term
 
 ## Instalasi dan penggunaan offline 
 
-Setelah aplikasi dibuka melalui HTTPS, gunakan pilihan **Install app / Tambahkan ke layar utama** dari browser. Setelah aset aplikasi selesai dimuat dan tersimpan, kalkulasi dapat digunakan offline; pembaruan kurs otomatis tetap memerlukan internet.
+Setelah aplikasi dibuka melalui HTTPS, gunakan pilihan **Install app / Tambahkan ke layar utama** dari browser. Setelah aset aplikasi selesai dimuat dan tersimpan, kalkulasi dapat digunakan offline. Saat aplikasi dibuka kembali dengan internet, cache offline diperbarui ke versi terbaru; pembaruan kurs otomatis tetap memerlukan internet.
