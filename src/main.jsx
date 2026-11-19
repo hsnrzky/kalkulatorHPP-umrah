@@ -362,7 +362,7 @@ function StatCard({ label, value, detail, icon: Icon, tone = "default" }) {
 function EditorTable({ rows, columns, onRemove, emptyLabel }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+      <table className="w-full min-w-190 border-collapse text-left text-sm">
         <thead>
           <tr className="border-b bg-muted/40 text-xs font-medium text-muted-foreground">
             {columns.map((column) => (
@@ -554,7 +554,7 @@ function Overview({ data, totals, warnings, setPage }) {
           <CardContent>
             {rows.length ? (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] text-left text-sm">
+                <table className="w-full min-w-140 text-left text-sm">
                   <thead>
                     <tr className="border-b text-xs text-muted-foreground">
                       <th className="py-3 font-medium">Akomodasi</th>
@@ -1558,7 +1558,7 @@ function LegacyTransportPage({ rows, total, exchange, updateRow, removeRow, addR
         <TableInput
           label="Rute transportasi"
           value={row.route}
-          placeholder="Jeddah – Makkah"
+          placeholder="Jeddah U+2013 Makkah"
           onChange={(event) => updateRow("transport", row.id, "route", event.target.value)}
         />
       ),
