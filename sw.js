@@ -1,4 +1,4 @@
-const CACHE_NAME = "rihlah-umrah-shell-2df4c01990c3";
+const CACHE_NAME = "rihlah-umrah-shell-4853f56346df";
 const APP_ROOT = new URL("./", self.registration.scope);
 const APP_ROOT_URL = APP_ROOT.href;
 
