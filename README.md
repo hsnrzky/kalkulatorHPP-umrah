@@ -53,7 +53,7 @@ Buka aplikasi melalui HTTPS, lalu pilih **Install app / Tambahkan ke layar utama
 
 ## Penggunaan dasar
 
-1. Isi detail paket dan kurs pada halaman **Biaya & pengaturan**.
+1. Isi detail paket dan kurs pada halaman **Pengaturan**.
 2. Masukkan akomodasi, transportasi, dan biaya lainnya.
 3. Tinjau HPP, harga jual, margin, alokasi, dan checklist pada halaman **Ringkasan**.
 4. Pilih **Cetak ke PDF** untuk membuat ringkasan audit atau buka **Penawaran paket** untuk mencetak penawaran.

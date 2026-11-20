@@ -124,7 +124,7 @@ const costNav = [
   { id: "lodging", label: "Hotel & Apartemen", icon: <BedDouble /> },
   { id: "transport", label: "Transportasi", icon: <BusFront /> },
   { id: "custom-costs", label: "Biaya lainnya", icon: <CircleDollarSign /> },
-  { id: "other-costs", label: "Biaya & pengaturan", icon: <Settings2 /> },
+  { id: "other-costs", label: "Pengaturan", icon: <Settings2 /> },
 ];
 
 const offerNav = [
@@ -153,9 +153,9 @@ const pageDetails = {
     description: "Tambahkan biaya khusus dengan perhitungan total paket atau per jamaah.",
   },
   "other-costs": {
-    label: "Biaya & pengaturan",
-    title: "Biaya & pengaturan",
-    description: "Kelola biaya langsung, biaya bersama, kurs, dan detail paket.",
+    label: "Pengaturan",
+    title: "Pengaturan paket",
+    description: "Kelola kurs, detail paket, template, dan cadangan data.",
   },
   offer: {
     label: "Penawaran paket",
@@ -1789,13 +1789,35 @@ function TransportPage({ rows, total, exchange, updateRow, removeRow, addRow }) 
   );
 }
 
-function CustomCostsPage({ rows, total, exchange, pax, updateRow, removeRow, addRow }) {
+function CustomCostsPage({
+  rows,
+  total,
+  exchange,
+  pax,
+  data,
+  updateRow,
+  updateAmount,
+  removeRow,
+  addRow,
+}) {
+  const directLabels = {
+    visa: "Visa",
+    flight: "Tiket pesawat",
+    zamzam: "Air zamzam",
+    porter: "Porter",
+  };
+  const sharedLabels = {
+    airport: "Handling bandara",
+    hotel: "Biaya hotel bersama",
+    guide: "Muthawif / guide",
+  };
+
   return (
     <>
       <PageHeading
         eyebrow="Rincian biaya"
         title="Biaya lainnya"
-        description="Tambahkan biaya yang belum tercakup dan tentukan apakah nominal dihitung untuk total paket atau setiap jamaah."
+        description="Kelola biaya langsung, biaya bersama, dan biaya tambahan paket."
         icon={CircleDollarSign}
       />
       <Card className="min-w-0">
@@ -1868,6 +1890,24 @@ function CustomCostsPage({ rows, total, exchange, pax, updateRow, removeRow, add
           </p>
         </CardContent>
       </Card>
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        <AmountCard
+          title="Biaya langsung per jamaah"
+          description="Biaya ini ditambahkan satu kali pada HPP setiap jamaah."
+          labels={directLabels}
+          amounts={data.direct}
+          currencies={data.directCurrency}
+          onChange={(key, value, currency) => updateAmount("direct", key, value, currency)}
+        />
+        <AmountCard
+          title="Biaya bersama"
+          description={`Biaya ini dibagi ke ${integer(data.pax)} jamaah.`}
+          labels={sharedLabels}
+          amounts={data.shared}
+          currencies={data.sharedCurrency}
+          onChange={(key, value, currency) => updateAmount("shared", key, value, currency)}
+        />
+      </div>
     </>
   );
 }
@@ -1876,7 +1916,6 @@ function OtherCostsPage({
   data,
   totals,
   updateSetting,
-  updateAmount,
   refreshRate,
   rateLoading,
   rateError,
@@ -1890,24 +1929,13 @@ function OtherCostsPage({
 }) {
   const [templateName, setTemplateName] = useState("");
   const backupInputRef = useRef(null);
-  const directLabels = {
-    visa: "Visa",
-    flight: "Tiket pesawat",
-    zamzam: "Air zamzam",
-    porter: "Porter",
-  };
-  const sharedLabels = {
-    airport: "Handling bandara",
-    hotel: "Biaya hotel bersama",
-    guide: "Muthawif / guide",
-  };
 
   return (
     <>
       <PageHeading
         eyebrow="Pengaturan paket"
-        title="Biaya & pengaturan"
-        description="Setiap biaya memiliki pilihan mata uang sendiri. Komponen IDR tidak dikonversi ulang."
+        title="Pengaturan"
+        description="Kelola informasi paket, kurs, template, dan cadangan data."
         icon={Settings2}
       />
       <div className="grid gap-4 xl:grid-cols-2">
@@ -2134,24 +2162,6 @@ function OtherCostsPage({
         </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <AmountCard
-          title="Biaya langsung per jamaah"
-          description="Biaya ini ditambahkan satu kali pada HPP setiap jamaah."
-          labels={directLabels}
-          amounts={data.direct}
-          currencies={data.directCurrency}
-          onChange={(key, value, currency) => updateAmount("direct", key, value, currency)}
-        />
-        <AmountCard
-          title="Biaya bersama"
-          description={`Biaya ini dibagi ke ${integer(data.pax)} jamaah.`}
-          labels={sharedLabels}
-          amounts={data.shared}
-          currencies={data.sharedCurrency}
-          onChange={(key, value, currency) => updateAmount("shared", key, value, currency)}
-        />
-      </div>
       <Card className="mt-4 border-destructive/20">
         <CardHeader className="flex-row items-center justify-between gap-4">
           <div>
@@ -2861,7 +2871,9 @@ function App() {
             total={totals.otherCostsTotal}
             exchange={data.exchange}
             pax={data.pax}
+            data={data}
             updateRow={updateRow}
+            updateAmount={updateAmount}
             removeRow={removeRow}
             addRow={addRow}
           />
@@ -2871,7 +2883,6 @@ function App() {
             data={data}
             totals={totals}
             updateSetting={updateSetting}
-            updateAmount={updateAmount}
             refreshRate={refreshRate}
             rateLoading={rateLoading}
             rateError={rateError}
